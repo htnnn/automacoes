@@ -1,0 +1,143 @@
+<style>
+    /* Container centralizador */
+    .container {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        height: 100vh;
+        text-align: center;
+    }
+
+    #loading,
+    #result,
+    #error,
+    #no-instance,
+    #message,
+    #avatar {
+        display: none;
+    }
+
+    #loading {
+        display: block;
+        width: 348px;
+        height: 348px;
+    }
+    #result {
+        display: none;
+    }
+
+    #avatar {
+        width: 348px;
+        height: 348px;
+        border-radius: 50%;
+        object-fit: cover;
+        display: none; /* Oculta o avatar inicialmente */
+        margin: 0 auto;
+    }
+    #qrcode-image, #error {
+        display: none; /* Oculta o QR code e erro inicialmente */
+        width: 348px;
+        height: 348px;
+        object-fit: cover;
+    }
+</style>
+
+<div class="container">
+    <!-- GIF de carregamento -->
+    <img id="loading" src="https://www.heltonrodrigues.com.br/wp-content/uploads/2024/08/carregando.gif" alt="Carregando...">
+
+    <!-- Imagem para o caso de erro -->
+    <img id="error" src="" alt="Erro">
+
+    <!-- Avatar -->
+    <img id="avatar" src="" alt="Avatar">
+
+    <!-- Mensagem de conexão -->
+    <div id="message" style="margin:20px"></div>
+    
+    <!-- Container para o QR Code -->
+    <div id="result">
+        <img id="qrcode-image" alt="QR Code">
+    </div>
+
+    <!-- Imagem para o caso de falta de instância -->
+    <img id="no-instance" src="" alt="Sem Instância">
+</div>
+
+<!-- JavaScript para lidar com a requisição e exibição das imagens -->
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        function getQueryParam(name) {
+            const urlParams = new URLSearchParams(window.location.search);
+            return urlParams.get(name);
+        }
+
+        const instancia = getQueryParam('instancia');
+        const qrcodeImg = document.getElementById('qrcode-image');
+        const avatarImg = document.getElementById('avatar');
+        const loadingImg = document.getElementById('loading');
+        const resultDiv = document.getElementById('result');
+        const errorImg = document.getElementById('error');
+        const noInstanceImg = document.getElementById('no-instance');
+        const messageDiv = document.getElementById('message');
+
+        function fetchQRCode() {
+            fetch(`https://seuwebhookaqui.com.br?instancia=${instancia}`)
+                .then(response => response.json())
+                .then(data => {
+                    // Esconde todos os elementos inicialmente
+                    loadingImg.style.display = 'none';
+                    resultDiv.style.display = 'none';
+                    errorImg.style.display = 'none';
+                    messageDiv.style.display = 'none';
+                    avatarImg.style.display = 'none';
+                    qrcodeImg.style.display = 'none';
+                    noInstanceImg.style.display = 'none';
+
+                    if (data.instancia === "conectada") {
+                        messageDiv.textContent = data.mensagem;
+                        avatarImg.src = data.imagem;
+                        avatarImg.style.display = 'block';
+                        messageDiv.style.display = 'block';
+
+                        // Fecha a aba após 5 segundos
+                        setTimeout(function() {
+                            window.close();
+                        }, 5000);
+                    } else if (data.instancia === "desconectada") {
+                        qrcodeImg.src = data.qrcode; // Adiciona o QR Code diretamente
+                        qrcodeImg.style.display = 'block';
+                        resultDiv.style.display = 'block';
+                    } else if (data.instancia === "invalida") {
+                        errorImg.src = data.imagem; // Use o URL da imagem do JSON
+                        errorImg.style.display = 'block';
+                    } else {
+                        // Se o estado da instância não for reconhecido, exibe uma mensagem padrão
+                        noInstanceImg.style.display = 'none'; // Oculta a imagem de falta de instância se não houver parâmetro
+                    }
+                })
+                .catch(() => {
+                    loadingImg.style.display = 'none';
+                    errorImg.style.display = 'block';
+                    noInstanceImg.style.display = 'none';
+                    resultDiv.style.display = 'none';
+                    messageDiv.style.display = 'none';
+                    avatarImg.style.display = 'none';
+                    qrcodeImg.style.display = 'none';
+                });
+        }
+
+        if (instancia) {
+            fetchQRCode(); // Busca inicial
+            setInterval(fetchQRCode, 30000); // Atualiza a cada 30 segundos
+        } else {
+            loadingImg.style.display = 'none';
+            resultDiv.style.display = 'none';
+            errorImg.style.display = 'none';
+            noInstanceImg.style.display = 'none'; // Remove a imagem de instância inválida se não houver parâmetro
+            avatarImg.style.display = 'none';
+            qrcodeImg.style.display = 'none';
+        }
+    });
+</script>
