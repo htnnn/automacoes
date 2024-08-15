@@ -1,0 +1,428 @@
+{
+  "name": "gerar qrcode evolution elementor",
+  "nodes": [
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "0ffc551f-e083-498f-aee3-5d413365105e",
+              "leftValue": "={{ $node[\"Webhook\"].json[\"query\"][\"instancia\"] }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "notEmpty",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "37083ccd-7d5f-4911-9fd1-aabcac56c632",
+      "name": "existe instancia",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        1000,
+        380
+      ]
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "1JRgWHbJvK3Vp0Sq63zayaT2ChlsJIUEsMN1GLu0MLgA",
+          "mode": "list",
+          "cachedResultName": "Instâncias Evolution",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1JRgWHbJvK3Vp0Sq63zayaT2ChlsJIUEsMN1GLu0MLgA/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Página1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1JRgWHbJvK3Vp0Sq63zayaT2ChlsJIUEsMN1GLu0MLgA/edit#gid=0"
+        },
+        "filtersUI": {
+          "values": [
+            {
+              "lookupColumn": "instancia",
+              "lookupValue": "={{ $node[\"Webhook\"].json[\"query\"][\"instancia\"] }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "065b3e6b-6622-40e8-987a-a5b1f54bb943",
+      "name": "busca instancia",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.3,
+      "position": [
+        1220,
+        240
+      ],
+      "alwaysOutputData": true,
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "wOT0Dh0YiXucDyrs",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "362282bb-6908-4834-88c8-ed08b480a507",
+              "leftValue": "={{ $node[\"busca instancia\"].json[\"row_number\"] }}",
+              "rightValue": "",
+              "operator": {
+                "type": "number",
+                "operation": "exists",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "12c17fc3-0dbc-4a98-b22a-2f24fae001ab",
+      "name": "verifica instancia",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        1440,
+        240
+      ]
+    },
+    {
+      "parameters": {
+        "url": "=https://megazord.wpp.heltonrodrigues.com.br/instance/connect/{{ $node[\"busca instancia\"].json[\"instancia\"] }}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "apikey",
+              "value": "={{ $node[\"busca instancia\"].json[\"apikey\"] }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "19e8232a-df12-4427-a1c8-5ffe1ec6c1ee",
+      "name": "qrcode",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1660,
+        220
+      ]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={\n  \"instancia\": \"desconectada\",\n  \"qrcode\": \"{{ $node[\"qrcode\"].json[\"base64\"] }}\"\n}",
+        "options": {}
+      },
+      "id": "cafb69ce-5582-4683-bd98-667faef2b0f5",
+      "name": "envia qrcode",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [
+        2160,
+        180
+      ]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "{\n  \"instancia\": \"invalida\",\n  \"imagem\": \"https://www.heltonrodrigues.com.br/wp-content/uploads/2024/08/sem-autorizacao.jpg\"\n}",
+        "options": {}
+      },
+      "id": "605716db-079e-4299-971c-3a1709ff98e1",
+      "name": "nao existe",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [
+        1300,
+        700
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "874028c7-7ded-4272-8132-6fa8625032fe",
+              "leftValue": "={{ $node[\"qrcode\"].json[\"instance\"][\"state\"] }}",
+              "rightValue": "open",
+              "operator": {
+                "type": "string",
+                "operation": "notEquals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "e6f0b26a-3f72-4803-86b1-48294cd41f9b",
+      "name": "qr gerado",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        1880,
+        220
+      ]
+    },
+    {
+      "parameters": {
+        "url": "=https://megazord.wpp.heltonrodrigues.com.br/instance/fetchInstances",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "instanceName",
+              "value": "={{ $node[\"busca instancia\"].json[\"instancia\"] }}"
+            }
+          ]
+        },
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "apikey",
+              "value": "SUA GLOBAL APIKEY"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "77cd4ee3-82c2-46f5-9630-972e9a38cfac",
+      "name": "pegar numero",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        2060,
+        440
+      ]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={\n  \"instancia\": \"conectada\",\n  \"imagem\": \"{{ $node[\"pegar numero\"].json[\"instance\"][\"profilePictureUrl\"] }}\",\n  \"mensagem\": \"Você está conectado no número {{ $node[\"pegar numero\"].json[\"instance\"][\"owner\"].split('@')[0] }}\"\n}",
+        "options": {}
+      },
+      "id": "5d402528-0336-49d8-a933-1af2e65bd6f7",
+      "name": "envia mensagem",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [
+        2240,
+        440
+      ]
+    },
+    {
+      "parameters": {
+        "path": "daaea6f8-d019-48df-af42-a90fb9baf62c",
+        "responseMode": "responseNode",
+        "options": {
+          "allowedOrigins": "*"
+        }
+      },
+      "id": "f7ae4b31-47cd-4a8d-b705-fcbbf65e873e",
+      "name": "Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        800,
+        380
+      ],
+      "webhookId": "b46bc77e-12fa-46e3-87d5-170563220fcf"
+    },
+    {
+      "parameters": {
+        "content": "Modelo planilha. [Google Sheets](https://docs.google.com/spreadsheets/d/1JRgWHbJvK3Vp0Sq63zayaT2ChlsJIUEsMN1GLu0MLgA/edit?usp=sharing)",
+        "height": 80,
+        "width": 414.09190371991286
+      },
+      "id": "7736a63c-e612-4680-8ee5-3b58e32e67c5",
+      "name": "Sticky Note",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        780,
+        140
+      ]
+    }
+  ],
+  "pinData": {
+    "Webhook": [
+      {
+        "json": {
+          "headers": {
+            "host": "megazord.warrom.heltonrodrigues.com.br",
+            "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36 OPR/112.0.0.0",
+            "accept": "*/*",
+            "accept-encoding": "gzip, deflate, br, zstd",
+            "accept-language": "pt-BR,pt;q=0.9",
+            "cache-control": "no-cache",
+            "origin": "https://www.heltonrodrigues.com.br",
+            "pragma": "no-cache",
+            "priority": "u=1, i",
+            "referer": "https://www.heltonrodrigues.com.br/",
+            "sec-ch-ua": "\"Not/A)Brand\";v=\"8\", \"Chromium\";v=\"126\", \"Opera GX\";v=\"112\"",
+            "sec-ch-ua-mobile": "?0",
+            "sec-ch-ua-platform": "\"Windows\"",
+            "sec-fetch-dest": "empty",
+            "sec-fetch-mode": "cors",
+            "sec-fetch-site": "same-site",
+            "x-forwarded-for": "143.208.203.205",
+            "x-forwarded-host": "megazord.warrom.heltonrodrigues.com.br",
+            "x-forwarded-port": "443",
+            "x-forwarded-proto": "https",
+            "x-forwarded-server": "a777257def3f",
+            "x-real-ip": "143.208.203.205"
+          },
+          "params": {},
+          "query": {
+            "instancia": "teste12312"
+          },
+          "body": {},
+          "webhookUrl": "https://megazord.warrom.heltonrodrigues.com.br/webhook/daaea6f8-d019-48df-af42-a90fb9baf62c",
+          "executionMode": "production"
+        }
+      }
+    ]
+  },
+  "connections": {
+    "existe instancia": {
+      "main": [
+        [
+          {
+            "node": "busca instancia",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "nao existe",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "busca instancia": {
+      "main": [
+        [
+          {
+            "node": "verifica instancia",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "verifica instancia": {
+      "main": [
+        [
+          {
+            "node": "qrcode",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "nao existe",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "qrcode": {
+      "main": [
+        [
+          {
+            "node": "qr gerado",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "qr gerado": {
+      "main": [
+        [
+          {
+            "node": "envia qrcode",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "pegar numero",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "pegar numero": {
+      "main": [
+        [
+          {
+            "node": "envia mensagem",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "existe instancia",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "78826c26-063d-45dd-bb1f-7cc90126e8d4",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "b1f998496c973ae8ed279111835ff32921dadd6611a431b2dc089e783ded15ec"
+  },
+  "id": "jDZkgxpVDXPqNQC3",
+  "tags": []
+}
